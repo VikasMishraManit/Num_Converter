@@ -1,7 +1,11 @@
+import streamlit as st
 from openpyxl import load_workbook
 import re
 from dateutil.parser import parse
+import tempfile
+import os
 
+# Utility functions
 def is_date_string(value):
     try:
         parse(value, fuzzy=False)
@@ -12,22 +16,52 @@ def is_date_string(value):
 def is_pure_number(value):
     return re.fullmatch(r"-?\d+(\.\d+)?", value.strip()) is not None
 
-def convert_text_to_number_safely(file_path, sheet_name=None):
+def convert_text_to_number_safely(file_path):
     wb = load_workbook(file_path)
-    sheets = [wb[sheet_name]] if sheet_name else wb.worksheets
-
-    for ws in sheets:
+    for ws in wb.worksheets:
         for row in ws.iter_rows():
             for cell in row:
                 val = cell.value
                 if isinstance(val, str):
                     if is_pure_number(val) and not is_date_string(val):
-                        # Safe to convert
-                        num = float(val)
-                        cell.value = int(num) if num.is_integer() else num
+                        try:
+                            num = float(val)
+                            cell.value = int(num) if num.is_integer() else num
+                        except:
+                            continue
+    return wb
 
-    wb.save(file_path)
-    print("Safe numeric conversion done.")
+# Streamlit app
+st.set_page_config(page_title="Excel Numeric Cleaner", layout="centered")
+st.title("📊 Excel Numeric Auto-Cleaner")
+st.markdown("Upload an `.xlsx` file and this app will convert valid numeric-looking strings into numbers, while skipping date-like values.")
 
-# Example usage
-convert_text_to_number_safely("your_excel_file.xlsx")
+uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
+
+if uploaded_file:
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_file:
+        tmp_file.write(uploaded_file.read())
+        temp_path = tmp_file.name
+
+    st.success("File uploaded! Processing...")
+
+    try:
+        wb = convert_text_to_number_safely(temp_path)
+
+        # Save updated file
+        result_path = temp_path.replace(".xlsx", "_converted.xlsx")
+        wb.save(result_path)
+
+        with open(result_path, "rb") as f:
+            st.download_button(
+                label="⬇️ Download Cleaned Excel File",
+                data=f,
+                file_name="cleaned_excel.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
+
+    # Clean up
+    if os.path.exists(temp_path):
+        os.remove(temp_path)
