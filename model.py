@@ -16,6 +16,9 @@ def is_date_string(value):
 def is_pure_number(value):
     return re.fullmatch(r"-?\d+(\.\d+)?", value.strip()) is not None
 
+
+// code to convert text to numbers
+// trims the leading zeroes and then converts it
 def convert_text_to_number_safely(file_path):
     wb = load_workbook(file_path)
     for ws in wb.worksheets:
@@ -23,14 +26,17 @@ def convert_text_to_number_safely(file_path):
             for cell in row:
                 val = cell.value
                 if isinstance(val, str):
-                    stripped_val = val.strip().lstrip("0") or "0"  # remove leading zeros
-                    if is_pure_number(stripped_val) and not is_date_string(val):
+                    trimmed_val = val.strip()
+                    if is_pure_number(trimmed_val) and not is_date_string(trimmed_val):
                         try:
-                            num = float(stripped_val)
+                            # Strip leading zeros safely
+                            normalized_val = trimmed_val.lstrip("0") or "0"
+                            num = float(normalized_val)
                             cell.value = int(num) if num.is_integer() else num
                         except:
                             continue
     return wb
+
 
 # Streamlit app
 st.set_page_config(page_title="Excel Numeric Cleaner", layout="centered")
