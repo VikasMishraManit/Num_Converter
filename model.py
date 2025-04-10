@@ -27,15 +27,19 @@ def convert_text_to_number_safely(file_path):
                     trimmed_val = val.strip()
                     if is_pure_number(trimmed_val) and not is_date_string(trimmed_val):
                         try:
-                            # Normalize: remove leading zeros
+                            # Remove leading zeros
                             normalized_val = trimmed_val.lstrip("0") or "0"
                             num = float(normalized_val)
-                            cell.value = int(num) if num.is_integer() else num
-                            
-                            # Clear any text formatting
+                            final_val = int(num) if num.is_integer() else num
+
+                            # Remove old value & format
+                            cell.value = None
                             cell.number_format = 'General'
-                            if hasattr(cell, "style"):
-                                cell.style = 'Normal'
+                            cell.style = 'Normal'
+
+                            # Assign number properly
+                            cell.value = final_val
+                            cell.data_type = 'n'  # force as number type
                         except:
                             continue
     return wb
