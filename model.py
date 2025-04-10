@@ -16,7 +16,7 @@ def is_date_string(value):
 def is_pure_number(value):
     return re.fullmatch(r"-?\d+(\.\d+)?", value.strip()) is not None
 
-// battle tested code
+
 def convert_text_to_number_safely(file_path):
     wb = load_workbook(file_path)
     for ws in wb.worksheets:
