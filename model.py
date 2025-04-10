@@ -28,11 +28,13 @@ def convert_text_to_number_safely(file_path):
                     trimmed_val = val.strip()
                     if is_pure_number(trimmed_val) and not is_date_string(trimmed_val):
                         try:
-                            # Strip leading zeros safely
-                            normalized_val = trimmed_val.lstrip("0") or "0"
-                            num = float(normalized_val)
-                            cell.value = int(num) if num.is_integer() else num
-                        except:
+                            # Remove leading zeros safely
+                            if '.' in trimmed_val:
+                                normalized_val = str(float(trimmed_val))  # keeps decimals
+                            else:
+                                normalized_val = str(int(trimmed_val.lstrip("0") or "0"))  # removes leading zeros
+                            cell.value = float(normalized_val) if '.' in normalized_val else int(normalized_val)
+                        except Exception as e:
                             continue
     return wb
 
