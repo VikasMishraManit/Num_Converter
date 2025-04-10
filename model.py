@@ -1,51 +1,25 @@
 import streamlit as st
-from openpyxl import load_workbook
-import re
-from dateutil.parser import parse
+import pandas as pd
 import tempfile
 import os
 
-# Utility functions
-def is_date_string(value):
-    try:
-        parse(value, fuzzy=False)
-        return True
-    except:
-        return False
+# Function to strip leading zeros and convert to int
+def strip_leading_zeros(val):
+    if isinstance(val, str) and val.strip().lstrip("0").isdigit():
+        return int(val.lstrip("0") or "0")
+    return val
 
-def is_pure_number(value):
-    return re.fullmatch(r"-?\d+(\.\d+)?", value.strip()) is not None
+# Process Excel with pandas and save using xlsxwriter
+def process_excel(file_path):
+    writer_path = file_path.replace(".xlsx", "_cleaned.xlsx")
+    xls = pd.read_excel(file_path, sheet_name=None)
 
+    with pd.ExcelWriter(writer_path, engine='xlsxwriter') as writer:
+        for sheet_name, df in xls.items():
+            cleaned_df = df.applymap(strip_leading_zeros)
+            cleaned_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-def convert_text_to_number_safely(file_path):
-    wb = load_workbook(file_path)
-    for ws in wb.worksheets:
-        for row in ws.iter_rows():
-            for cell in row:
-                val = cell.value
-                if isinstance(val, str):
-                    trimmed_val = val.strip()
-                    if is_pure_number(trimmed_val) and not is_date_string(trimmed_val):
-                        try:
-                            # Remove leading zeros
-                            normalized_val = trimmed_val.lstrip("0") or "0"
-                            num = float(normalized_val)
-                            final_val = int(num) if num.is_integer() else num
-
-                            # Remove old value & format
-                            cell.value = None
-                            cell.number_format = 'General'
-                            cell.style = 'Normal'
-
-                            # Assign number properly
-                            cell.value = final_val
-                            cell.data_type = 'n'  # force as number type
-                        except:
-                            continue
-    return wb
-
-
-
+    return writer_path
 
 # Streamlit app
 st.set_page_config(page_title="Excel Numeric Cleaner", layout="centered")
@@ -62,11 +36,7 @@ if uploaded_file:
     st.success("File uploaded! Processing...")
 
     try:
-        wb = convert_text_to_number_safely(temp_path)
-
-        # Save updated file
-        result_path = temp_path.replace(".xlsx", "_converted.xlsx")
-        wb.save(result_path)
+        result_path = process_excel(temp_path)
 
         with open(result_path, "rb") as f:
             st.download_button(
