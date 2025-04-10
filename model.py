@@ -17,8 +17,7 @@ def is_pure_number(value):
     return re.fullmatch(r"-?\d+(\.\d+)?", value.strip()) is not None
 
 
-// code to convert text to numbers
-// trims the leading zeroes and then converts it
+
 def convert_text_to_number_safely(file_path):
     wb = load_workbook(file_path)
     for ws in wb.worksheets:
