@@ -17,7 +17,6 @@ def is_pure_number(value):
     return re.fullmatch(r"-?\d+(\.\d+)?", value.strip()) is not None
 
 
-
 def convert_text_to_number_safely(file_path):
     wb = load_workbook(file_path)
     for ws in wb.worksheets:
@@ -28,15 +27,18 @@ def convert_text_to_number_safely(file_path):
                     trimmed_val = val.strip()
                     if is_pure_number(trimmed_val) and not is_date_string(trimmed_val):
                         try:
-                            # Remove leading zeros safely
                             if '.' in trimmed_val:
-                                normalized_val = str(float(trimmed_val))  # keeps decimals
+                                normalized_val = float(trimmed_val.lstrip("0") or "0")
                             else:
-                                normalized_val = str(int(trimmed_val.lstrip("0") or "0"))  # removes leading zeros
-                            cell.value = float(normalized_val) if '.' in normalized_val else int(normalized_val)
-                        except Exception as e:
+                                normalized_val = int(trimmed_val.lstrip("0") or "0")
+
+                            # Set actual numeric value
+                            cell.value = normalized_val
+                            cell.number_format = 'General'  # clear any existing 'Text' formatting
+                        except:
                             continue
     return wb
+
 
 
 # Streamlit app
