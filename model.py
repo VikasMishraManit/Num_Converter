@@ -23,9 +23,10 @@ def convert_text_to_number_safely(file_path):
             for cell in row:
                 val = cell.value
                 if isinstance(val, str):
-                    if is_pure_number(val) and not is_date_string(val):
+                    stripped_val = val.strip().lstrip("0") or "0"  # remove leading zeros
+                    if is_pure_number(stripped_val) and not is_date_string(val):
                         try:
-                            num = float(val)
+                            num = float(stripped_val)
                             cell.value = int(num) if num.is_integer() else num
                         except:
                             continue
@@ -34,7 +35,7 @@ def convert_text_to_number_safely(file_path):
 # Streamlit app
 st.set_page_config(page_title="Excel Numeric Cleaner", layout="centered")
 st.title("📊 Excel Numeric Auto-Cleaner")
-st.markdown("Upload an `.xlsx` file and this app will convert valid numeric-looking strings into numbers, while skipping date-like values.")
+st.markdown("Upload an `.xlsx` file and this app will convert all numeric-looking strings (even with leading zeros) into actual numbers, skipping date-like values.")
 
 uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
 
